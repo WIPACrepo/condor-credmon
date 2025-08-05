@@ -14,7 +14,6 @@ jobs:
 
   lint:
     name: Lint
-    id: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +39,6 @@ jobs:
 
   test:
     name: Test
-    id: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +55,6 @@ jobs:
 
   coverage:
     name: Coverage
-    id: coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
