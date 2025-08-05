@@ -111,13 +111,14 @@ jobs:
         id: rpm_build
         name: Get RPM
         run: |
+          export TARGET="x86_64-unknown-linux-musl"
           rustup update stable && rustup default stable
           cargo install cargo-generate-rpm
-          rustup target add x86_64-unknown-linux-musl
-          cargo build --release --target x86_64-unknown-linux-musl
-          strip -s target/x86_64-unknown-linux-musl/release/condor-credmon
-          cargo generate-rpm --target x86_64-unknown-linux-musl
-          echo "RPM_NAME=target/generate-rpm/condor-credmon.rpm" >> "$GITHUB_OUTPUT"
+          rustup target add $TARGET
+          cargo build --release --target $TARGET
+          strip -s target/$TARGET/release/condor-credmon
+          cargo generate-rpm --target $TARGET
+          echo "RPM_NAME=target/$TARGET/generate-rpm/condor-credmon.rpm" >> "$GITHUB_OUTPUT"
 
       - if: steps.next-version.outputs.version != ''
         name: Create Release
