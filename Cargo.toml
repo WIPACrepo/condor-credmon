@@ -1,0 +1,18 @@
+[package]
+name = "condor-credmon"
+description = "Rust version of a condor credmon"
+version = "0.1.0"
+repository = "https://github.com/WIPACrepo/condor-credmon"
+license = "MIT"
+edition = "2021"
+publish = false
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/condor-credmon", dest = "/usr/sbin/condor_credmon_rust"}
+]
+
+[package.metadata.generate-rpm.requires]
+condor = ">= 24"
+
+[dependencies]
