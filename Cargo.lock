@@ -163,7 +163,6 @@ dependencies = [
  "serde",
  "serde_json",
  "signal-hook",
- "url",
  "whoami",
 ]
 
