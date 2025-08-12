@@ -24,9 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let username = whoami::username();
 
-    let path = PathBuf::from(cred_dir)
-        .join(username)
-        .join(refresh_filename);
+    let path = PathBuf::from(cred_dir).join(username).join(refresh_filename);
 
     let result = do_token_exchange(&args).expect("failed exchange");
 

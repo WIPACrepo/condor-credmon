@@ -1,15 +1,15 @@
 use std::fs;
 
-use oauth2::basic::BasicTokenType;
 use oauth2::ExtraTokenFields;
+use oauth2::basic::BasicTokenType;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use openidconnect::reqwest;
 use openidconnect::{ClientId, ClientSecret, IssuerUrl, OAuth2TokenResponse, RedirectUrl, Scope};
 use serde::{Deserialize, Serialize};
 
 use crate::config::config as condor_config;
-use crate::error::CredmonError;
 use crate::data::Args;
+use crate::error::CredmonError;
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct CustomTokenExtraFields {
@@ -24,12 +24,12 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
 
     let issuer_key = format!("{provider_name}_ISSUER");
     let issuer_url = IssuerUrl::new(
-    config
+        config
             .get(&issuer_key)
             .ok_or(CredmonError::IssuerError(format!("missing {issuer_key} in config")))?
             .as_str()
             .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
-            .to_string()
+            .to_string(),
     )?;
 
     let client_id_key = format!("{provider_name}_CLIENT_ID");
@@ -57,10 +57,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
         .expect("Client should build");
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
-    let provider_metadata = CoreProviderMetadata::discover(
-        &issuer_url,
-        &http_client,
-    )?;
+    let provider_metadata = CoreProviderMetadata::discover(&issuer_url, &http_client)?;
     let token_url = match provider_metadata.token_endpoint() {
         Some(x) => x.to_string(),
         None => return Result::Err(Box::new(CredmonError::DiscoveryError("token url not discovered".into()))),

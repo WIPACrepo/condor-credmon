@@ -31,12 +31,12 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
 
     let issuer_key = format!("{provider_name}_ISSUER");
     let issuer_url = IssuerUrl::new(
-    config
+        config
             .get(&issuer_key)
             .ok_or(CredmonError::IssuerError(format!("missing {issuer_key} in config")))?
             .as_str()
             .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
-            .to_string()
+            .to_string(),
     )?;
 
     let client_id_key = format!("{provider_name}_CLIENT_ID");

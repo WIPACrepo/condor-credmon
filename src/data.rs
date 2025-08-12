@@ -1,5 +1,5 @@
-use oauth2::{ExtraTokenFields, TokenResponse};
 use oauth2::basic::BasicTokenType;
+use oauth2::{ExtraTokenFields, TokenResponse};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
@@ -59,7 +59,10 @@ impl AccessFile {
     }
 }
 
-pub fn write_tokens_to_file<EF: ExtraTokenFields>(refresh_path: &Path, result: oauth2::StandardTokenResponse<EF, BasicTokenType>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn write_tokens_to_file<EF: ExtraTokenFields>(
+    refresh_path: &Path,
+    result: oauth2::StandardTokenResponse<EF, BasicTokenType>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let access_path = refresh_path.with_extension(".use");
 
     // now write the refresh token
@@ -93,7 +96,6 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(refresh_path: &Path, result: o
     Ok(())
 }
 
-
 /// Client storer arguments
 pub struct Args {
     pub provider: String,
@@ -110,31 +112,25 @@ impl Args {
 
         let mut args = HashMap::new();
         for entry in argv[0].split('&') {
-            if let Some((key,val)) = entry.split_once('=') {
+            if let Some((key, val)) = entry.split_once('=') {
                 args.insert(key.to_string(), val.to_string());
             }
         }
 
         let provider = match args.get("options") {
-            Some(opts) => {
-                opts.to_owned()
-            },
+            Some(opts) => opts.to_owned(),
             None => {
                 return Err(Box::new(CredmonError::ArgumentError("need to specify provider in options".into())));
             }
         };
 
-        let scopes = match args.get("scopes"){
+        let scopes = match args.get("scopes") {
             Some(scopes) => scopes.replace(",", " "),
-            None => String::new()
+            None => String::new(),
         };
 
         let handle = args.get("handle").map(|h| h.to_owned());
 
-        Ok(Self{
-            provider,
-            scopes,
-            handle,
-        })
+        Ok(Self { provider, scopes, handle })
     }
 }
