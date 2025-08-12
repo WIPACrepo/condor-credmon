@@ -15,6 +15,9 @@ assets = [
 [package.metadata.generate-rpm.requires]
 condor = ">= 24"
 
+[package.metadata.generate-rpm.conflicts]
+condor-credmon-oauth = "*"
+
 [dependencies]
 memoize = { version = "0.5.1", default-features = false }
 oauth2 = { version = "5.0.0", features = ["reqwest-blocking", "rustls-tls"] }
