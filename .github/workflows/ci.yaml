@@ -110,12 +110,21 @@ jobs:
           strip -s target/$TARGET/release/condor_credmon
           strip -s target/$TARGET/release/client
           cargo generate-rpm --target $TARGET
-          echo "RPM_NAME=target/$TARGET/generate-rpm/condor_credmon*.rpm" >> "$GITHUB_OUTPUT"
+          mv target/$TARGET/generate-rpm/condor_credmon*.rpm condor-credmon-rust.rpm
+          mv target/$TARGET/release/client condor_credmod_rust_client
+          mv target/$TARGET/release/condor_credmon condor_credmon_rust
 
       - uses: actions/upload-artifact@v4
         with:
-          name: condor_credmon.rpm
-          path: ${{ steps.rpm_build.outputs.RPM_NAME }}
+          name: rpm
+          path: condor-credmon-rust.rpm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: |
+            condor_credmod_rust_client
+            condor_credmon_rust
 
   tag-and-release:
     # only run on main/default branch
@@ -127,4 +136,5 @@ jobs:
     with:
       project-type: rust
       release-artifacts: |
-        condor_credmon.rpm
+        rpm
+        binaries

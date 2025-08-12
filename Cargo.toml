@@ -1,7 +1,6 @@
 [package]
 name = "condor_credmon"
 description = "Rust version of a condor credmon"
-version = "0.1.0"
 repository = "https://github.com/WIPACrepo/condor-credmon"
 license = "MIT"
 edition = "2021"
