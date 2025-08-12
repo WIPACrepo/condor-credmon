@@ -1,12 +1,12 @@
 use oauth2::RefreshToken;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
-use openidconnect::{ClientId, ClientSecret, IssuerUrl, OAuth2TokenResponse};
+use openidconnect::{ClientId, ClientSecret, IssuerUrl};
 use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::config::config as condor_config;
-use crate::data::{AccessFile, RefreshFile};
+use crate::data::{AccessFile, RefreshFile, write_tokens_to_file};
 use crate::error::CredmonError;
 
 fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
@@ -29,6 +29,16 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
 
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
 
+    let issuer_key = format!("{provider_name}_ISSUER");
+    let issuer_url = IssuerUrl::new(
+        config
+            .get(&issuer_key)
+            .ok_or(CredmonError::IssuerError(format!("missing {issuer_key} in config")))?
+            .as_str()
+            .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
+            .to_string(),
+    )?;
+
     let client_id_key = format!("{provider_name}_CLIENT_ID");
     let client_id = ClientId::new(
         config
@@ -48,8 +58,6 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let client_secret = ClientSecret::new(fs::read_to_string(client_secret_file)?);
 
     // 1. Discover the provider metadata (or manually configure if known)
-    let issuer_url = IssuerUrl::new("https://keycloak.icecube.wisc.edu/auth/realms/IceCube".to_string())?;
-
     let http_client = reqwest::blocking::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
@@ -66,41 +74,7 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         .exchange_refresh_token(&RefreshToken::new(old_refresh_file.refresh_token))?
         .request(&http_client)?;
 
-    // 4. Access the token
-    let access_token = token_response.access_token().secret();
-    //println!("Access Token: {access_token}");
-    let refresh_token = token_response.refresh_token().expect("no refresh token").secret();
-    //println!("Refresh Token: {refresh_token}");
-
-    let mut scopes = Vec::new();
-    if let Some(s) = token_response.scopes() {
-        //println!("Scopes: {:?}", s);
-        scopes.extend(s.iter().map(|x| x.as_str().to_string()));
-    }
-
-    // now write the refresh and access tokens
-    RefreshFile {
-        refresh_token: refresh_token.clone(),
-        scopes: scopes.join(" "),
-    }
-    .write_to_file(path)?;
-
-    let exp: u64 = token_response.expires_in().unwrap_or(Duration::from_secs(600)).as_secs();
-    let exp_at = SystemTime::now()
-        .checked_add(Duration::from_secs(exp))
-        .unwrap()
-        .duration_since(UNIX_EPOCH)?
-        .as_secs_f64();
-    AccessFile {
-        access_token: access_token.clone(),
-        token_type: token_response.token_type().as_ref().to_string(),
-        expires_in: exp,
-        expires_at: exp_at,
-        scope: scopes,
-    }
-    .write_to_file(access_path)?;
-
-    Ok(())
+    write_tokens_to_file(&path, token_response)
 }
 
 pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
