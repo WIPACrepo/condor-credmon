@@ -1,8 +1,16 @@
+use oauth2::{ExtraTokenFields, TokenResponse};
+use oauth2::basic::BasicTokenType;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::collections::HashMap;
+use std::env;
+use std::error::Error;
 use std::io::BufReader;
 use std::path::Path;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::{fs::File, io::Write};
+
+use crate::error::CredmonError;
 
 #[derive(Serialize, Deserialize)]
 pub struct RefreshFile {
@@ -48,5 +56,85 @@ impl AccessFile {
         let mut file = File::create(path)?;
         file.write_all(json_string.as_bytes())?;
         Ok(())
+    }
+}
+
+pub fn write_tokens_to_file<EF: ExtraTokenFields>(refresh_path: &Path, result: oauth2::StandardTokenResponse<EF, BasicTokenType>) -> Result<(), Box<dyn std::error::Error>> {
+    let access_path = refresh_path.with_extension(".use");
+
+    // now write the refresh token
+    let mut scopes = Vec::new();
+    if let Some(s) = result.scopes() {
+        //println!("Scopes: {:?}", s);
+        scopes.extend(s.iter().map(|x| x.as_str().to_string()));
+    }
+
+    RefreshFile {
+        refresh_token: result.refresh_token().unwrap().clone().into_secret(),
+        scopes: scopes.join(" "),
+    }
+    .write_to_file(refresh_path)?;
+
+    let exp: u64 = result.expires_in().unwrap_or(Duration::from_secs(600)).as_secs();
+    let exp_at = SystemTime::now()
+        .checked_add(Duration::from_secs(exp))
+        .unwrap()
+        .duration_since(UNIX_EPOCH)?
+        .as_secs_f64();
+    AccessFile {
+        access_token: result.access_token().clone().into_secret(),
+        token_type: result.token_type().as_ref().to_string(),
+        expires_in: exp,
+        expires_at: exp_at,
+        scope: scopes,
+    }
+    .write_to_file(access_path)?;
+
+    Ok(())
+}
+
+
+/// Client storer arguments
+pub struct Args {
+    pub provider: String,
+    pub scopes: String,
+    pub handle: Option<String>,
+}
+
+impl Args {
+    pub fn from_env() -> Result<Self, Box<dyn Error>> {
+        let argv: Vec<String> = env::args().collect();
+        if argv.is_empty() {
+            return Err(Box::new(CredmonError::ArgumentError("need to specify scopes and options (provider)".into())));
+        }
+
+        let mut args = HashMap::new();
+        for entry in argv[0].split('&') {
+            if let Some((key,val)) = entry.split_once('=') {
+                args.insert(key.to_string(), val.to_string());
+            }
+        }
+
+        let provider = match args.get("options") {
+            Some(opts) => {
+                opts.to_owned()
+            },
+            None => {
+                return Err(Box::new(CredmonError::ArgumentError("need to specify provider in options".into())));
+            }
+        };
+
+        let scopes = match args.get("scopes"){
+            Some(scopes) => scopes.replace(",", " "),
+            None => String::new()
+        };
+
+        let handle = args.get("handle").map(|h| h.to_owned());
+
+        Ok(Self{
+            provider,
+            scopes,
+            handle,
+        })
     }
 }

@@ -39,9 +39,11 @@ SEC_CREDENTIAL_SWEEP_DELAY=86400
 # Now set up a provider.
 OAUTH2_CREDMON_PROVIDER_NAMES = myprovider
 # The base path to the issuer, for dynamic discovery.
-myprovider_ISSUER = https://my.issuer.here
+myprovider_ISSUER = "https://my.issuer.here"
 # The client id registered with the issuer.
-myprovider_CLIENT_ID = XXXXXX
+myprovider_CLIENT_ID = "XXXXXX"
 # The client secret is provided in a file that can only be read by root.
 myprovider_CLIENT_SECRET_FILE = /etc/condor/.secrets/XXXXXX-client-secret
+# Actually tell the STORER which provider this is
+myprovider_DEFAULT_OPTIONS = "myprovider"
 ```
