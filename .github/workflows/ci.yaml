@@ -77,33 +77,20 @@ jobs:
           fi
       - run: cargo tarpaulin --fail-immediately --fail-under 50 --locked
 
-  tag-and-release:
+  build_rpm:
     # only run on main/master/default
     if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
     needs: [
       test
     ]
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
-    concurrency: tag-and-release  # prevent any possible race conditions
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # required to see tags and commits
           ref: ${{ github.sha }}  # lock to triggered commit ('github.ref' is dynamic)
 
-      - uses: WIPACrepo/wipac-dev-next-version-action@v1.2
-        id: next-version
-        with:
-          force-patch-if-no-commit-token: True
-          ignore-paths: |
-            resources/**
-            target/**
-            .github/**
-
-      - if: steps.next-version.outputs.version != ''
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.cargo/bin
           key: coverage-cache-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
@@ -111,8 +98,7 @@ jobs:
             coverage-cache-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
             coverage-cache-${{ runner.os }}-
 
-      - if: steps.next-version.outputs.version != ''
-        id: rpm_build
+      - id: rpm_build
         name: Get RPM
         run: |
           export TARGET="x86_64-unknown-linux-musl"
@@ -124,13 +110,22 @@ jobs:
           strip -s target/$TARGET/release/condor_credmon
           strip -s target/$TARGET/release/client
           cargo generate-rpm --target $TARGET
-          echo "RPM_NAME=target/$TARGET/generate-rpm/condor-credmon.rpm" >> "$GITHUB_OUTPUT"
+          echo "RPM_NAME=target/$TARGET/generate-rpm/condor_credmon*.rpm" >> "$GITHUB_OUTPUT"
 
-      - if: steps.next-version.outputs.version != ''
-        name: Create Release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: v${{ steps.next-version.outputs.version }}
-          target_commitish: ${{ github.sha }}
-          generate_release_notes: True
-          files: ${{ steps.rpm_build.outputs.RPM_NAME }}
+          name: condor_credmon.rpm
+          path: ${{ steps.rpm_build.outputs.RPM_NAME }}
+
+  tag-and-release:
+    # only run on main/default branch
+    if: format('refs/heads/{0}', github.event.repository.default_branch) == github.ref
+    needs: [ build_rpm ]
+    uses: WIPACrepo/wipac-dev-workflows/.github/workflows/tag-and-release.yml@v1.5
+    permissions: # for GITHUB_TOKEN
+      contents: write
+    concurrency: tag-and-release  # prevent any possible race conditions
+    with:
+      project-type: rust
+      release-artifacts: |
+        condor_credmon.rpm
