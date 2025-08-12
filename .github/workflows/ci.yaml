@@ -121,7 +121,8 @@ jobs:
           cargo install cargo-generate-rpm
           rustup target add $TARGET
           cargo build --release --target $TARGET
-          strip -s target/$TARGET/release/condor-credmon
+          strip -s target/$TARGET/release/condor_credmon
+          strip -s target/$TARGET/release/client
           cargo generate-rpm --target $TARGET
           echo "RPM_NAME=target/$TARGET/generate-rpm/condor-credmon.rpm" >> "$GITHUB_OUTPUT"
 
