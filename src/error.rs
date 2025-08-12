@@ -14,10 +14,10 @@ impl Error for CredmonError {}
 impl fmt::Display for CredmonError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            CredmonError::DiscoveryError(details) => write!(f, "DiscoveryError: {}", details),
-            CredmonError::ClientCredenialsError(details) => write!(f, "ClientCredenialsError: {}", details),
-            CredmonError::MissingRefreshToken(details) => write!(f, "MissingRefreshToken: {}", details),
-            CredmonError::OAuthDirError(details) => write!(f, "OAuthDirError:{}", details),
+            CredmonError::DiscoveryError(details) => write!(f, "DiscoveryError: {details}"),
+            CredmonError::ClientCredenialsError(details) => write!(f, "ClientCredenialsError: {details}"),
+            CredmonError::MissingRefreshToken(details) => write!(f, "MissingRefreshToken: {details}"),
+            CredmonError::OAuthDirError(details) => write!(f, "OAuthDirError:{details}"),
         }
     }
 }

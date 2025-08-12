@@ -29,22 +29,22 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
 
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
 
-    let client_id_key = format!("{}_CLIENT_ID", provider_name);
+    let client_id_key = format!("{provider_name}_CLIENT_ID");
     let client_id = ClientId::new(
         config
             .get(&client_id_key)
-            .ok_or(CredmonError::OAuthDirError(format!("missing {} in config", client_id_key)))?
+            .ok_or(CredmonError::OAuthDirError(format!("missing {client_id_key} in config")))?
             .as_str()
-            .ok_or(CredmonError::OAuthDirError(format!("{} is not a string", client_id_key)))?
+            .ok_or(CredmonError::OAuthDirError(format!("{client_id_key} is not a string")))?
             .to_string(),
     );
 
-    let client_secret_key = format!("{}_CLIENT_SECRET_FILE", provider_name);
+    let client_secret_key = format!("{provider_name}_CLIENT_SECRET_FILE");
     let client_secret_file = config
         .get(&client_secret_key)
-        .ok_or(CredmonError::OAuthDirError(format!("missing {} in config", client_secret_key)))?
+        .ok_or(CredmonError::OAuthDirError(format!("missing {client_secret_key} in config")))?
         .as_str()
-        .ok_or(CredmonError::OAuthDirError(format!("{} is not a string", client_secret_key)))?;
+        .ok_or(CredmonError::OAuthDirError(format!("{client_secret_key} is not a string")))?;
     let client_secret = ClientSecret::new(fs::read_to_string(client_secret_file)?);
 
     // 1. Discover the provider metadata (or manually configure if known)
@@ -68,13 +68,13 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
 
     // 4. Access the token
     let access_token = token_response.access_token().secret();
-    println!("Access Token: {}", access_token);
+    //println!("Access Token: {access_token}");
     let refresh_token = token_response.refresh_token().expect("no refresh token").secret();
-    println!("Refresh Token: {}", refresh_token);
+    //println!("Refresh Token: {refresh_token}");
 
     let mut scopes = Vec::new();
     if let Some(s) = token_response.scopes() {
-        println!("Scopes: {:?}", s);
+        //println!("Scopes: {:?}", s);
         scopes.extend(s.iter().map(|x| x.as_str().to_string()));
     }
 

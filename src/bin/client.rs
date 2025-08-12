@@ -2,7 +2,6 @@ use oauth2::TokenResponse;
 use std::error::Error;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use whoami;
 
 use condor_credmon::config::config as condor_config;
 use condor_credmon::data::{AccessFile, RefreshFile};
@@ -28,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // now write the refresh token
     let mut scopes = Vec::new();
     if let Some(s) = result.scopes() {
-        println!("Scopes: {:?}", s);
+        //println!("Scopes: {:?}", s);
         scopes.extend(s.iter().map(|x| x.as_str().to_string()));
     }
 

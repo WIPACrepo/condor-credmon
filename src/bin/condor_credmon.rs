@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     thread::spawn(move || {
         for sig in signals.forever() {
-            println!("Received reload signal {:?}", sig);
+            println!("Received reload signal {sig:?}");
             RELOAD.store(true, Relaxed);
         }
     });

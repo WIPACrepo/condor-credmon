@@ -20,6 +20,6 @@ pub fn config() -> Map<String, Value> {
     serde_json::from_str(&json_output).expect("Cannot decode HTCondor config!")
 }
 
-pub fn reload_config() -> () {
+pub fn reload_config() {
     memoized_flush_config()
 }
