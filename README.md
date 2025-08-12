@@ -21,7 +21,7 @@ SEC_DEFAULT_ENCRYPTION = REQUIRED
 SEC_CREDENTIAL_DIRECTORY_OAUTH = /var/lib/condor/oauth_credentials
 TRUST_CREDENTIAL_DIRECTORY = True
 CREDMON_OAUTH = /usr/sbin/condor_credmon_rust
-SEC_CREDENTIAL_STORER = /usr/bin/condor_rust_storer
+SEC_CREDENTIAL_STORER = /usr/bin/condor_credmod_rust_client
 SEC_CREDENTIAL_MONITOR_OAUTH_LOG = $(LOG)/CredMonOAuthLog
 
 # This is the minimum time in seconds that access tokens must have
@@ -35,4 +35,13 @@ CREDMON_OAUTH_TOKEN_REFRESH=150
 # This is the time in seconds that credd will wait after jobs are
 #   finished before deleting the user's credential directory.
 SEC_CREDENTIAL_SWEEP_DELAY=86400
+
+# Now set up a provider.
+OAUTH2_CREDMON_PROVIDER_NAMES = myprovider
+# The base path to the issuer, for dynamic discovery.
+myprovider_ISSUER = https://my.issuer.here
+# The client id registered with the issuer.
+myprovider_CLIENT_ID = XXXXXX
+# The client secret is provided in a file that can only be read by root.
+myprovider_CLIENT_SECRET_FILE = /etc/condor/.secrets/XXXXXX-client-secret
 ```
