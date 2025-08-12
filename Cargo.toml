@@ -3,7 +3,7 @@ name = "condor_credmon"
 description = "Rust version of a condor credmon"
 repository = "https://github.com/WIPACrepo/condor-credmon"
 license = "MIT"
-edition = "2021"
+edition = "2024"
 publish = false
 
 [package.metadata.generate-rpm]
