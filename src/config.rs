@@ -1,3 +1,4 @@
+use log::{error, info};
 use memoize::memoize;
 use serde_json::{Map, Value};
 use std::process::Command;
@@ -6,13 +7,15 @@ static HTCONDOR_CONFIG: [&str; 2] = ["-c", "import htcondor,json; print(json.dum
 
 #[memoize]
 pub fn config() -> Map<String, Value> {
+    info!(target:"config", "Loading HTCondor config");
+
     // Execute the Python script
     let output = Command::new("python3").args(HTCONDOR_CONFIG).output().expect("Cannot get HTCondor config!");
 
     // Check if the command was successful
     if !output.status.success() {
         let err = String::from_utf8(output.stderr).expect("cannot decode stderr");
-        eprintln!("Python script failed: {err}");
+        error!(target: "config", "Python script failed: {err}");
         panic!("Cannot get HTCondor config!");
     }
 

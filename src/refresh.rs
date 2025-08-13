@@ -1,18 +1,21 @@
+use log::{info, warn};
 use oauth2::RefreshToken;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use openidconnect::{ClientId, ClientSecret, IssuerUrl};
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::config::config as condor_config;
 use crate::data::{AccessFile, RefreshFile, write_tokens_to_file};
 use crate::error::CredmonError;
 
-fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    info!(target: "refresh", "Refreshing {}", path.to_str().unwrap());
+
     let config = condor_config();
 
-    let old_refresh_file = RefreshFile::from_file(&path)?;
+    let old_refresh_file = RefreshFile::from_file(path)?;
     let access_path = path.with_extension(".use");
     match AccessFile::from_file(&access_path) {
         Ok(x) => {
@@ -74,7 +77,7 @@ fn single_refresh(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         .exchange_refresh_token(&RefreshToken::new(old_refresh_file.refresh_token))?
         .request(&http_client)?;
 
-    write_tokens_to_file(&path, token_response)
+    write_tokens_to_file(path, token_response)
 }
 
 pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,7 +103,11 @@ pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
                     .ends_with(".top")
                 {
                     // this is a refresh token, so let's process it
-                    single_refresh(path.path())?;
+                    let path = path.path();
+                    match single_refresh(&path) {
+                        Ok(_) => {}
+                        Err(e) => warn!(target: "refresh", "Error refreshing {}: {e}", path.to_str().unwrap()),
+                    };
                 }
             }
         }

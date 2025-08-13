@@ -106,12 +106,13 @@ pub struct Args {
 impl Args {
     pub fn from_env() -> Result<Self, Box<dyn Error>> {
         let argv: Vec<String> = env::args().collect();
-        if argv.is_empty() {
+
+        if argv.len() < 2 {
             return Err(Box::new(CredmonError::ArgumentError("need to specify scopes and options (provider)".into())));
         }
 
         let mut args = HashMap::new();
-        for entry in argv[0].split('&') {
+        for entry in argv[1].split('&') {
             if let Some((key, val)) = entry.split_once('=') {
                 args.insert(key.to_string(), val.to_string());
             }
