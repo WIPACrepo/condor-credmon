@@ -19,6 +19,7 @@ condor = ">= 24"
 condor-credmon-oauth = "*"
 
 [dependencies]
+log = "0.4.27"
 memoize = { version = "0.5.1", default-features = false }
 oauth2 = { version = "5.0.0", features = ["reqwest-blocking", "rustls-tls"] }
 openidconnect = { version = "4.0.1", features = ["reqwest-blocking", "rustls-tls"] }
@@ -26,4 +27,5 @@ reqwest = { version = "0.12.22", default-features = false, features = ["blocking
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.142"
 signal-hook = "0.3.18"
+stderrlog = "0.6.0"
 whoami = "1.6.1"
