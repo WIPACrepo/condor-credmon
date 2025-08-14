@@ -3,12 +3,14 @@ use oauth2::{ExtraTokenFields, TokenResponse};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
-use std::{env, fs};
+use std::env;
 use std::error::Error;
+use std::fs;
+use std::fs::File;
 use std::io::BufReader;
+use std::io::Write;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::{fs::File, io::Write};
 
 use crate::error::CredmonError;
 

@@ -4,7 +4,7 @@ use oauth2::ExtraTokenFields;
 use oauth2::basic::BasicTokenType;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use openidconnect::reqwest;
-use openidconnect::{ClientId, ClientSecret, IssuerUrl, OAuth2TokenResponse, RedirectUrl, Scope};
+use openidconnect::{ClientId, ClientSecret, IssuerUrl, OAuth2TokenResponse, RedirectUrl};
 use serde::{Deserialize, Serialize};
 
 use crate::config::config as condor_config;
@@ -74,9 +74,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
     .set_redirect_uri(RedirectUrl::new("http://localhost".to_string())?);
 
     // 3. Exchange client credentials for an access token
-    let token_response = client
-        .exchange_client_credentials()?
-        .request(&http_client)?;
+    let token_response = client.exchange_client_credentials()?.request(&http_client)?;
 
     let subject_token = token_response.access_token().secret();
 
