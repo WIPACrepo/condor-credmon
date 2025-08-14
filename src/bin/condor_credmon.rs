@@ -10,7 +10,12 @@ use condor_credmon::config::reload_config;
 use condor_credmon::refresh::refresh_all_tokens;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    stderrlog::new().module(module_path!()).verbosity(log::Level::Info).init().unwrap();
+    stderrlog::new()
+        .show_module_names(true)
+        .verbosity(log::Level::Info)
+        .timestamp(stderrlog::Timestamp::Millisecond)
+        .init()
+        .unwrap();
 
     static RELOAD: AtomicBool = AtomicBool::new(false);
     let mut signals = Signals::new([SIGHUP])?;

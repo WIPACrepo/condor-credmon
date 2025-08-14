@@ -9,7 +9,12 @@ use condor_credmon::error::CredmonError;
 use condor_credmon::exchange::do_token_exchange;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    stderrlog::new().module(module_path!()).verbosity(log::Level::Info).init().unwrap();
+    stderrlog::new()
+        .show_module_names(true)
+        .verbosity(log::Level::Info)
+        .timestamp(stderrlog::Timestamp::Millisecond)
+        .init()
+        .unwrap();
 
     let config = condor_config();
 
@@ -19,6 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(ref handle) = args.handle {
         refresh_filename += handle;
     }
+    refresh_filename += ".top";
 
     let cred_dir = config
         .get("SEC_CREDENTIAL_DIRECTORY_OAUTH")
