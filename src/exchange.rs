@@ -76,7 +76,6 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
     // 3. Exchange client credentials for an access token
     let token_response = client
         .exchange_client_credentials()?
-        .add_scopes(args.scopes.split(" ").map(|s| Scope::new(s.into())))
         .request(&http_client)?;
 
     let subject_token = token_response.access_token().secret();
@@ -89,6 +88,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
         ("subject_token_type", "urn:ietf:params:oauth:token-type:access_token"),
         ("requested_token_type", "urn:ietf:params:oauth:token-type:refresh_token"),
         ("requested_subject", "dschultz"),
+        ("scope", &args.scopes),
     ];
 
     let result = http_client

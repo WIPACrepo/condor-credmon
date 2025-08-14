@@ -3,7 +3,7 @@ use oauth2::{ExtraTokenFields, TokenResponse};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
-use std::env;
+use std::{env, fs};
 use std::error::Error;
 use std::io::BufReader;
 use std::path::Path;
@@ -64,6 +64,11 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(
     result: oauth2::StandardTokenResponse<EF, BasicTokenType>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let access_path = refresh_path.with_extension(".use");
+
+    let parent_path = access_path.parent().unwrap();
+    if !parent_path.exists() {
+        fs::create_dir_all(parent_path)?;
+    }
 
     // now write the refresh token
     let mut scopes = Vec::new();

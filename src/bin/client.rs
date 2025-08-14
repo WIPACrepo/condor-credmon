@@ -8,7 +8,7 @@ use condor_credmon::error::CredmonError;
 use condor_credmon::exchange::do_token_exchange;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    stderrlog::new().module(module_path!()).init().unwrap();
+    stderrlog::new().module(module_path!()).verbosity(log::Level::Info).init().unwrap();
 
     let config = condor_config();
 
