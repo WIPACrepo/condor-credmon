@@ -5,10 +5,12 @@ use serde_json;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
+use std::fs;
+use std::fs::File;
 use std::io::BufReader;
+use std::io::Write;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::{fs::File, io::Write};
 
 use crate::error::CredmonError;
 
@@ -64,6 +66,11 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(
     result: oauth2::StandardTokenResponse<EF, BasicTokenType>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let access_path = refresh_path.with_extension(".use");
+
+    let parent_path = access_path.parent().unwrap();
+    if !parent_path.exists() {
+        fs::create_dir_all(parent_path)?;
+    }
 
     // now write the refresh token
     let mut scopes = Vec::new();
