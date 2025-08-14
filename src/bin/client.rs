@@ -1,4 +1,5 @@
 use log::warn;
+use nix::unistd::{Uid, User};
 use std::error::Error;
 use std::path::PathBuf;
 
@@ -25,7 +26,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .as_str()
         .ok_or(CredmonError::OAuthDirError("SEC_CREDENTIAL_DIRECTORY_OAUTH is not a string".into()))?;
 
-    let username = whoami::username();
+    let username = User::from_uid(Uid::current())?.ok_or(
+        CredmonError::GenericError("Cannot get username".into())
+    )?.name;
+
+    log::info!("Running as username {username}");
 
     let path = PathBuf::from(cred_dir).join(username).join(refresh_filename);
 
