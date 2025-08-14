@@ -26,9 +26,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         .as_str()
         .ok_or(CredmonError::OAuthDirError("SEC_CREDENTIAL_DIRECTORY_OAUTH is not a string".into()))?;
 
-    let username = User::from_uid(Uid::current())?.ok_or(
-        CredmonError::GenericError("Cannot get username".into())
-    )?.name;
+    let username = User::from_uid(Uid::current())?
+        .ok_or(CredmonError::GenericError("Cannot get username".into()))?
+        .name;
 
     log::info!("Running as username {username}");
 
