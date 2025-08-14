@@ -65,7 +65,7 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(
     refresh_path: &Path,
     result: oauth2::StandardTokenResponse<EF, BasicTokenType>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let access_path = refresh_path.with_extension(".use");
+    let access_path = refresh_path.with_extension("use");
 
     let parent_path = access_path.parent().unwrap();
     if !parent_path.exists() {

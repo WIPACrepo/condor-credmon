@@ -23,12 +23,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     loop {
+        log::info!("Checking for tokens to refresh");
         match refresh_all_tokens() {
             Ok(_) => {}
             Err(e) => warn!("Error refreshing: {e}"),
         };
+        log::info!("Done refreshing tokens");
 
-        sleep(Duration::from_secs(1));
+        sleep(Duration::from_secs(30));
         if RELOAD.load(Relaxed) {
             RELOAD.store(false, Relaxed);
             reload_config();
