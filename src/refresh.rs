@@ -4,7 +4,7 @@ use std::fs;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use crate::config::config as condor_config;
+use crate::config::{coerce_to_int, config as condor_config};
 use crate::data::{AccessFile, ClientInfo, RefreshFile, write_tokens_to_file};
 use crate::error::CredmonError;
 
@@ -16,9 +16,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let config = condor_config();
 
     let exp_min = match config.get("CREDMON_OAUTH_TOKEN_MINIMUM") {
-        Some(x) => x
-            .as_u64()
-            .ok_or(CredmonError::ConfigError("CREDMON_OAUTH_TOKEN_MINIMUM is not an integer!".into()))?,
+        Some(x) => coerce_to_int(x)?,
         None => TOKEN_MINIMUM_EXPIRATION,
     };
 

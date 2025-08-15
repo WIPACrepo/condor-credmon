@@ -9,7 +9,7 @@ use log4rs::{
     encode::pattern::PatternEncoder,
 };
 
-use crate::config::config as condor_config;
+use crate::config::{coerce_to_int, config as condor_config};
 
 const LOG_DEFAULT_LEVEL: log::LevelFilter = log::LevelFilter::Warn;
 const LOG_DEFAULT_SIZE: u64 = 1000000000;
@@ -46,9 +46,9 @@ fn log_to_file(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dy
     let log_size = get_size("MAX_CREDMON_OAUTH_LOG");
 
     let log_rotations = match config.get("MAX_NUM_CREDMON_OAUTH_LOG") {
-        Some(x) => match x.as_u64() {
-            Some(y) => y as u32,
-            None => LOG_DEFAULT_ROTATIONS,
+        Some(x) => match coerce_to_int(x) {
+            Ok(x) => x as u32,
+            _ => LOG_DEFAULT_ROTATIONS,
         },
         None => LOG_DEFAULT_ROTATIONS,
     };

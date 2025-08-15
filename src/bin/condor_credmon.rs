@@ -9,8 +9,7 @@ use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
 
-use condor_credmon::config::{config as condor_config, reload_config};
-use condor_credmon::error::CredmonError;
+use condor_credmon::config::{coerce_to_int, config as condor_config, reload_config};
 use condor_credmon::logging::configure_logging;
 use condor_credmon::refresh::refresh_all_tokens;
 
@@ -31,15 +30,9 @@ fn run() -> Result<(), Box<dyn Error>> {
     });
 
     let refresh_interval = match config.get("CREDMON_OAUTH_TOKEN_REFRESH") {
-        Some(x) => x
-            .as_u64()
-            .ok_or(CredmonError::ConfigError("CREDMON_OAUTH_TOKEN_REFRESH is not an integer!".into()))?,
+        Some(x) => coerce_to_int(x)?,
         None => match config.get("CREDMON_OAUTH_TOKEN_MINIMUM") {
-            Some(x) => {
-                x.as_u64()
-                    .ok_or(CredmonError::ConfigError("CREDMON_OAUTH_TOKEN_MINIMUM is not an integer!".into()))?
-                    / 2
-            }
+            Some(x) => coerce_to_int(x)? / 2,
             None => TOKEN_REFRESH_INTERVAL,
         },
     };
