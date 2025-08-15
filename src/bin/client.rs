@@ -20,6 +20,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let mut refresh_filename = args.provider.clone();
     if let Some(ref handle) = args.handle {
+        refresh_filename += "_";
         refresh_filename += handle;
         log::warn!("Creating token for {username} with provider {} and handle {handle}", args.provider);
     } else {
@@ -35,13 +36,9 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let path = PathBuf::from(cred_dir).join(username).join(refresh_filename);
 
-    match do_token_exchange(&args) {
-        Ok(result) => write_tokens_to_file(&path, result),
-        Err(e) => {
-            log::warn!("Error getting tokens: {e}");
-            Err(e)
-        }
-    }
+    let result = do_token_exchange(&args)?;
+    write_tokens_to_file(&path, result)?;
+    Ok(())
 }
 
 fn main() {

@@ -65,7 +65,7 @@ fn main() {
         Ok(_) => (),
         Err(e) => {
             log::error!("Backtrace: {}", Backtrace::force_capture());
-            log::error!("Error creating token: {e}");
+            log::error!("Fatal error in credmon: {e}");
         }
     }
 }

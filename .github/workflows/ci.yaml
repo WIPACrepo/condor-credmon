@@ -138,8 +138,8 @@ jobs:
           fi
           rustup target add $TARGET
           cargo build --release --target $TARGET
-          strip -s target/$TARGET/release/condor_credmon
-          strip -s target/$TARGET/release/client
+          #strip -s target/$TARGET/release/condor_credmon
+          #strip -s target/$TARGET/release/client
           cargo generate-rpm --target $TARGET
           mv target/$TARGET/generate-rpm/condor_credmon*.rpm condor-credmon-rust.${VERSION#v}.x86_64.rpm
           mv target/$TARGET/release/client condor_credmod_rust_client
