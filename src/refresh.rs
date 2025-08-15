@@ -21,7 +21,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let old_refresh_file = RefreshFile::from_file(path)?;
-    let access_path = path.with_extension(".use");
+    let access_path = path.with_extension("use");
     match AccessFile::from_file(&access_path) {
         Ok(x) => {
             // check expiration

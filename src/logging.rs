@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use log4rs::{
+    Handle,
     append::{
         console::{ConsoleAppender, Target},
         rolling_file::policy::compound::{CompoundPolicy, roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger},
@@ -84,7 +85,7 @@ fn log_to_file(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dy
 fn log_to_stderr(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dyn Error>> {
     // Build a stderr logger.
     let stderr = ConsoleAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{d} {l} {M} - {m}{n}")))
+        .encoder(Box::new(PatternEncoder::new("{d} {l} {M:<24} - {m}{n}")))
         .target(Target::Stderr)
         .build();
 
@@ -97,10 +98,8 @@ fn log_to_stderr(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<
     Ok(handle)
 }
 
-pub fn configure_logging(how_output: Option<&str>) -> Result<log4rs::Handle, Box<dyn Error>> {
-    let config = condor_config();
-
-    let log_verbosity = match config.get("CREDMON_OAUTH_DEBUG") {
+fn get_log_level(config: &crate::config::Config) -> log::LevelFilter {
+    match config.get("CREDMON_OAUTH_DEBUG") {
         Some(x) => match x.as_str() {
             Some("D_ALWAYS") => log::LevelFilter::Warn,
             Some("D_FULLDEBUG") => log::LevelFilter::Info,
@@ -108,10 +107,35 @@ pub fn configure_logging(how_output: Option<&str>) -> Result<log4rs::Handle, Box
             _ => LOG_DEFAULT_LEVEL,
         },
         None => LOG_DEFAULT_LEVEL,
-    };
+    }
+}
+
+pub fn configure_logging(how_output: Option<&str>) -> Result<log4rs::Handle, Box<dyn Error>> {
+    let config = condor_config();
+
+    let log_verbosity = get_log_level(&config);
 
     match how_output {
         Some("stderr") => log_to_stderr(log_verbosity),
         _ => log_to_file(log_verbosity),
     }
+}
+
+pub fn update_file_logging(handle: &mut Handle) {
+    let config = condor_config();
+
+    let log_verbosity = get_log_level(&config);
+
+    // Build a stderr logger.
+    let stderr = ConsoleAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d} {l} {M} - {m}{n}")))
+        .target(Target::Stderr)
+        .build();
+
+    let config = Config::builder()
+        .appender(Appender::builder().build("stderr", Box::new(stderr)))
+        .build(Root::builder().appender("stderr").build(log_verbosity))
+        .unwrap();
+
+    handle.set_config(config);
 }

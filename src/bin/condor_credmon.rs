@@ -10,13 +10,13 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use condor_credmon::config::{coerce_to_int, config as condor_config, reload_config};
-use condor_credmon::logging::configure_logging;
+use condor_credmon::logging::{configure_logging, update_file_logging};
 use condor_credmon::refresh::refresh_all_tokens;
 
 const TOKEN_REFRESH_INTERVAL: u64 = 60;
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let _log_handle = configure_logging(None)?;
+    let mut log_handle = configure_logging(None)?;
     let config = condor_config();
 
     static RELOAD: AtomicBool = AtomicBool::new(false);
@@ -49,6 +49,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         if RELOAD.load(Relaxed) {
             RELOAD.store(false, Relaxed);
             reload_config();
+            update_file_logging(&mut log_handle);
         }
     }
 }
