@@ -9,18 +9,27 @@ use crate::config::config as condor_config;
 use crate::data::{AccessFile, RefreshFile, write_tokens_to_file};
 use crate::error::CredmonError;
 
+const TOKEN_MINIMUM_EXPIRATION: u64 = 60;
+
 fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     log::info!(target: "refresh", "Checking {}", path.to_str().unwrap());
 
     let config = condor_config();
 
+    let exp_min = match config.get("CREDMON_OAUTH_TOKEN_MINIMUM") {
+        Some(x) => x
+            .as_u64()
+            .ok_or(CredmonError::ConfigError("CREDMON_OAUTH_TOKEN_MINIMUM is not an integer!".into()))?,
+        None => TOKEN_MINIMUM_EXPIRATION,
+    };
+
     let old_refresh_file = RefreshFile::from_file(path)?;
     let access_path = path.with_extension(".use");
     match AccessFile::from_file(&access_path) {
         Ok(x) => {
-            // check expiration half-life
+            // check expiration
             let expiration = UNIX_EPOCH + Duration::from_secs_f64(x.expires_at);
-            if expiration < SystemTime::now().checked_sub(Duration::from_secs(x.expires_in / 2)).unwrap() {
+            if expiration < SystemTime::now().checked_add(Duration::from_secs(exp_min)).unwrap() {
                 log::info!(target: "refresh", "  Refresh not needed");
                 return Ok(());
             }

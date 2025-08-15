@@ -9,6 +9,7 @@ pub enum CredmonError {
     MissingRefreshToken(String),
     OAuthDirError(String),
     IssuerError(String),
+    ConfigError(String),
     GenericError(String),
 }
 
@@ -23,6 +24,7 @@ impl fmt::Display for CredmonError {
             CredmonError::MissingRefreshToken(details) => write!(f, "MissingRefreshToken: {details}"),
             CredmonError::OAuthDirError(details) => write!(f, "OAuthDirError: {details}"),
             CredmonError::IssuerError(details) => write!(f, "IssuerError: {details}"),
+            CredmonError::ConfigError(details) => write!(f, "ConfigError: {details}"),
             CredmonError::GenericError(details) => write!(f, "GenericError: {details}"),
         }
     }
