@@ -1,12 +1,13 @@
 use std::error::Error;
 
 use log4rs::{
+    Handle,
     append::{
         console::{ConsoleAppender, Target},
-        rolling_file::policy::compound::{roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger, CompoundPolicy},
+        rolling_file::policy::compound::{CompoundPolicy, roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger},
     },
     config::{Appender, Config, Root},
-    encode::pattern::PatternEncoder, Handle,
+    encode::pattern::PatternEncoder,
 };
 
 use crate::config::{coerce_to_int, config as condor_config};
