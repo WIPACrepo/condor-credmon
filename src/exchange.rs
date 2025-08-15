@@ -1,14 +1,12 @@
-use std::fs;
-
 use oauth2::ExtraTokenFields;
 use oauth2::basic::BasicTokenType;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use openidconnect::reqwest;
-use openidconnect::{ClientId, ClientSecret, IssuerUrl, OAuth2TokenResponse, RedirectUrl};
+use openidconnect::{OAuth2TokenResponse, RedirectUrl};
 use serde::{Deserialize, Serialize};
 
 use crate::config::config as condor_config;
-use crate::data::Args;
+use crate::data::{Args, ClientInfo};
 use crate::error::CredmonError;
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -19,40 +17,10 @@ impl ExtraTokenFields for CustomTokenExtraFields {}
 
 pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType>, Box<dyn std::error::Error>> {
     let config = condor_config();
-    log::info!(target: "exchange", "Getting tokens");
+    log::info!("Getting tokens");
+    log::info!("  provider = {}", args.provider);
 
-    let provider_name = &args.provider;
-    log::info!(target: "exchange", "  provider = {provider_name}");
-
-    let issuer_key = format!("{provider_name}_ISSUER");
-    let issuer_url = IssuerUrl::new(
-        config
-            .get(&issuer_key)
-            .ok_or(CredmonError::IssuerError(format!("missing {issuer_key} in config")))?
-            .as_str()
-            .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
-            .to_string(),
-    )?;
-    log::info!(target: "exchange", "  issuer = {issuer_url}");
-
-    let client_id_key = format!("{provider_name}_CLIENT_ID");
-    let client_id = ClientId::new(
-        config
-            .get(&client_id_key)
-            .ok_or(CredmonError::OAuthDirError(format!("missing {client_id_key} in config")))?
-            .as_str()
-            .ok_or(CredmonError::OAuthDirError(format!("{client_id_key} is not a string")))?
-            .to_string(),
-    );
-    log::info!(target: "exchange", "  client_id = {}", client_id.as_str());
-
-    let client_secret_key = format!("{provider_name}_CLIENT_SECRET_FILE");
-    let client_secret_file = config
-        .get(&client_secret_key)
-        .ok_or(CredmonError::OAuthDirError(format!("missing {client_secret_key} in config")))?
-        .as_str()
-        .ok_or(CredmonError::OAuthDirError(format!("{client_secret_key} is not a string")))?;
-    let client_secret = ClientSecret::new(fs::read_to_string(client_secret_file)?);
+    let info = ClientInfo::new(args.provider.as_str(), &config)?;
 
     let http_client = reqwest::blocking::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
@@ -61,7 +29,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
         .expect("Client should build");
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
-    let provider_metadata = match CoreProviderMetadata::discover(&issuer_url, &http_client) {
+    let provider_metadata = match CoreProviderMetadata::discover(&info.issuer_url, &http_client) {
         Ok(x) => Ok(x),
         Err(x) => Err(CredmonError::DiscoveryError(x.to_string())),
     }?;
@@ -75,8 +43,8 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
     // and token URL.
     let client = CoreClient::from_provider_metadata(
         provider_metadata,
-        client_id.clone(),
-        Some(client_secret.clone()),
+        info.client_id.clone(),
+        Some(info.client_secret.clone()),
     )
     // URL needs to not be empty, so put a dummy URL here
     .set_redirect_uri(RedirectUrl::new("http://localhost".to_string())?);
@@ -89,7 +57,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
     // 4. do token exchange
     let params = [
         ("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange"),
-        ("audience", client_id.as_str()),
+        ("audience", info.client_id.as_str()),
         ("subject_token", subject_token),
         ("subject_token_type", "urn:ietf:params:oauth:token-type:access_token"),
         ("requested_token_type", "urn:ietf:params:oauth:token-type:refresh_token"),
@@ -99,7 +67,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
 
     let result = http_client
         .post(token_url.as_str())
-        .basic_auth(client_id.as_str(), Some(client_secret.secret()))
+        .basic_auth(info.client_id.as_str(), Some(info.client_secret.secret()))
         .form(&params)
         .send()?;
 
