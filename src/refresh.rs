@@ -47,7 +47,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
             Err(_) => ClientInfo::new(provider_name, &config)?,
             Ok(x) => x,
         },
-        None => ClientInfo::new(provider_name, &config)?
+        None => ClientInfo::new(provider_name, &config)?,
     };
 
     // 1. Discover the provider metadata (or manually configure if known)
