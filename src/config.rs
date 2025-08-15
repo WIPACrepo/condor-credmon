@@ -5,8 +5,10 @@ use std::process::Command;
 
 static HTCONDOR_CONFIG: [&str; 2] = ["-c", "import htcondor,json; print(json.dumps({k:v for k,v in htcondor.param.items()}))"];
 
+pub type Config = Map<String, Value>;
+
 #[memoize]
-pub fn config() -> Map<String, Value> {
+pub fn config() -> Config {
     info!(target:"config", "Loading HTCondor config");
 
     // Execute the Python script

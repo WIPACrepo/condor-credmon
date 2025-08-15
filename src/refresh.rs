@@ -1,12 +1,11 @@
 use oauth2::RefreshToken;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
-use openidconnect::{ClientId, ClientSecret, IssuerUrl};
 use std::fs;
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::config::config as condor_config;
-use crate::data::{AccessFile, RefreshFile, write_tokens_to_file};
+use crate::data::{AccessFile, ClientInfo, RefreshFile, write_tokens_to_file};
 use crate::error::CredmonError;
 
 const TOKEN_MINIMUM_EXPIRATION: u64 = 60;
@@ -44,35 +43,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
     log::info!(target: "refresh", "  provider = {provider_name}");
 
-    let issuer_key = format!("{provider_name}_ISSUER");
-    let issuer_url = IssuerUrl::new(
-        config
-            .get(&issuer_key)
-            .ok_or(CredmonError::IssuerError(format!("missing {issuer_key} in config")))?
-            .as_str()
-            .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
-            .to_string(),
-    )?;
-    log::info!(target: "refresh", "  issuer = {issuer_url}");
-
-    let client_id_key = format!("{provider_name}_CLIENT_ID");
-    let client_id = ClientId::new(
-        config
-            .get(&client_id_key)
-            .ok_or(CredmonError::OAuthDirError(format!("missing {client_id_key} in config")))?
-            .as_str()
-            .ok_or(CredmonError::OAuthDirError(format!("{client_id_key} is not a string")))?
-            .to_string(),
-    );
-    log::info!(target: "refresh", "  client_id = {}", client_id.as_str());
-
-    let client_secret_key = format!("{provider_name}_CLIENT_SECRET_FILE");
-    let client_secret_file = config
-        .get(&client_secret_key)
-        .ok_or(CredmonError::OAuthDirError(format!("missing {client_secret_key} in config")))?
-        .as_str()
-        .ok_or(CredmonError::OAuthDirError(format!("{client_secret_key} is not a string")))?;
-    let client_secret = ClientSecret::new(fs::read_to_string(client_secret_file)?);
+    let info = ClientInfo::new(provider_name, &config)?;
 
     // 1. Discover the provider metadata (or manually configure if known)
     let http_client = reqwest::blocking::ClientBuilder::new()
@@ -81,12 +52,12 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .expect("Client should build");
 
-    let provider_metadata = match CoreProviderMetadata::discover(&issuer_url, &http_client) {
+    let provider_metadata = match CoreProviderMetadata::discover(&info.issuer_url, &http_client) {
         Ok(x) => Ok(x),
         Err(x) => Err(CredmonError::DiscoveryError(x.to_string())),
     }?;
 
-    let client = CoreClient::from_provider_metadata(provider_metadata, client_id, Some(client_secret))
+    let client = CoreClient::from_provider_metadata(provider_metadata, info.client_id, Some(info.client_secret))
         .set_redirect_uri(openidconnect::RedirectUrl::new("http://localhost".to_string())?); // Redirect URI is required for client creation, but not strictly used in Client Credentials Flow
 
     // 3. Exchange client credentials for an access token
