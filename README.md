@@ -37,7 +37,8 @@ CREDMON_OAUTH_TOKEN_REFRESH=150
 SEC_CREDENTIAL_SWEEP_DELAY=86400
 
 # Now set up a provider.
-OAUTH2_CREDMON_PROVIDER_NAMES = myprovider
+# In order for condor to not print out a url, we claim we are a Vault credmon
+VAULT_CREDMON_PROVIDER_NAMES = myprovider
 # The base path to the issuer, for dynamic discovery.
 myprovider_ISSUER = "https://my.issuer.here"
 # The client id registered with the issuer.
