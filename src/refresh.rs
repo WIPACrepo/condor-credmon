@@ -41,9 +41,14 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     log::warn!(target: "refresh", "  Now doing refresh for {}", path.to_str().unwrap());
 
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
-    log::info!(target: "refresh", "  provider = {provider_name}");
-
-    let info = ClientInfo::new(provider_name, &config)?;
+    log::info!(target: "refresh", "  provider(+handle) = {provider_name}");
+    let info = match provider_name.rsplit_once('_') {
+        Some((p, _)) => match ClientInfo::new(p, &config) {
+            Err(_) => ClientInfo::new(provider_name, &config)?,
+            Ok(x) => x,
+        },
+        None => ClientInfo::new(provider_name, &config)?
+    };
 
     // 1. Discover the provider metadata (or manually configure if known)
     let http_client = reqwest::blocking::ClientBuilder::new()
