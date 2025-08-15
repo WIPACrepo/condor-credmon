@@ -40,3 +40,20 @@ pub fn config() -> Config {
 pub fn reload_config() {
     memoized_flush_config()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_coerce_to_int() {
+        let mut config: Map<String, Value> = Map::new();
+        config.insert("foo".into(), "10".into());
+        config.insert("bar".into(), 20.into());
+        config.insert("baz".into(), "10Mb".into());
+
+        assert_eq!(coerce_to_int(config.get("foo").unwrap()).unwrap(), 10);
+        assert_eq!(coerce_to_int(config.get("bar").unwrap()).unwrap(), 20);
+        assert!(coerce_to_int(config.get("baz").unwrap()).is_err());
+    }
+}
