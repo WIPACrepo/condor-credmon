@@ -73,6 +73,7 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(
     }
 
     // now write the refresh token
+    log::info!("Writing refresh token at {}", refresh_path.to_str().unwrap());
     let mut scopes = Vec::new();
     if let Some(s) = result.scopes() {
         //println!("Scopes: {:?}", s);
@@ -85,6 +86,7 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(
     }
     .write_to_file(refresh_path)?;
 
+    log::info!("Writing access token at {}", access_path.to_str().unwrap());
     let exp: u64 = result.expires_in().unwrap_or(Duration::from_secs(600)).as_secs();
     let exp_at = SystemTime::now()
         .checked_add(Duration::from_secs(exp))
