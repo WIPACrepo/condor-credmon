@@ -1,21 +1,20 @@
 use log::warn;
 use signal_hook::consts::SIGHUP;
 use signal_hook::iterator::Signals;
+use std::backtrace::Backtrace;
+use std::error::Error;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
+use std::thread;
 use std::thread::sleep;
-use std::{error::Error, thread, time::Duration};
+use std::time::Duration;
 
 use condor_credmon::config::reload_config;
+use condor_credmon::logging::configure_logging;
 use condor_credmon::refresh::refresh_all_tokens;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    stderrlog::new()
-        .show_module_names(true)
-        .verbosity(log::Level::Info)
-        .timestamp(stderrlog::Timestamp::Millisecond)
-        .init()
-        .unwrap();
+fn run() -> Result<(), Box<dyn Error>> {
+    let _log_handle = configure_logging(None)?;
 
     static RELOAD: AtomicBool = AtomicBool::new(false);
     let mut signals = Signals::new([SIGHUP])?;
@@ -39,6 +38,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         if RELOAD.load(Relaxed) {
             RELOAD.store(false, Relaxed);
             reload_config();
+        }
+    }
+}
+
+fn main() {
+    match run() {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Backtrace: {}", Backtrace::force_capture());
+            log::error!("Error creating token: {e}");
         }
     }
 }

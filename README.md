@@ -21,8 +21,8 @@ SEC_DEFAULT_ENCRYPTION = REQUIRED
 SEC_CREDENTIAL_DIRECTORY_OAUTH = /var/lib/condor/oauth_credentials
 TRUST_CREDENTIAL_DIRECTORY = True
 CREDMON_OAUTH = /usr/sbin/condor_credmon_rust
+CREDMON_OAUTH_LOG = $(LOG)/CredMonOAuthLog
 SEC_CREDENTIAL_STORER = /usr/bin/condor_credmod_rust_client
-SEC_CREDENTIAL_MONITOR_OAUTH_LOG = $(LOG)/CredMonOAuthLog
 
 # This is the minimum time in seconds that access tokens must have
 #   before they expire when they are fetched by credmon.  It must

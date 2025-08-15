@@ -1,4 +1,3 @@
-use log::{info, warn};
 use oauth2::RefreshToken;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use openidconnect::{ClientId, ClientSecret, IssuerUrl};
@@ -11,7 +10,7 @@ use crate::data::{AccessFile, RefreshFile, write_tokens_to_file};
 use crate::error::CredmonError;
 
 fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    info!(target: "refresh", "Refreshing {}", path.to_str().unwrap());
+    log::info!(target: "refresh", "Checking {}", path.to_str().unwrap());
 
     let config = condor_config();
 
@@ -22,15 +21,19 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
             // check expiration half-life
             let expiration = UNIX_EPOCH + Duration::from_secs_f64(x.expires_at);
             if expiration < SystemTime::now().checked_sub(Duration::from_secs(x.expires_in / 2)).unwrap() {
+                log::info!(target: "refresh", "  Refresh not needed");
                 return Ok(());
             }
         }
         Err(_) => {
             // file is missing, do refresh
+            log::info!(target: "refresh", "  Access token missing!");
         }
     }
+    log::warn!(target: "refresh", "  Now doing refresh for {}", path.to_str().unwrap());
 
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
+    log::info!(target: "refresh", "  provider = {provider_name}");
 
     let issuer_key = format!("{provider_name}_ISSUER");
     let issuer_url = IssuerUrl::new(
@@ -41,6 +44,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
             .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
             .to_string(),
     )?;
+    log::info!(target: "refresh", "  issuer = {issuer_url}");
 
     let client_id_key = format!("{provider_name}_CLIENT_ID");
     let client_id = ClientId::new(
@@ -51,6 +55,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
             .ok_or(CredmonError::OAuthDirError(format!("{client_id_key} is not a string")))?
             .to_string(),
     );
+    log::info!(target: "refresh", "  client_id = {}", client_id.as_str());
 
     let client_secret_key = format!("{provider_name}_CLIENT_SECRET_FILE");
     let client_secret_file = config
@@ -67,7 +72,10 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .expect("Client should build");
 
-    let provider_metadata = CoreProviderMetadata::discover(&issuer_url, &http_client)?;
+    let provider_metadata = match CoreProviderMetadata::discover(&issuer_url, &http_client) {
+        Ok(x) => Ok(x),
+        Err(x) => Err(CredmonError::DiscoveryError(x.to_string())),
+    }?;
 
     let client = CoreClient::from_provider_metadata(provider_metadata, client_id, Some(client_secret))
         .set_redirect_uri(openidconnect::RedirectUrl::new("http://localhost".to_string())?); // Redirect URI is required for client creation, but not strictly used in Client Credentials Flow
@@ -106,7 +114,7 @@ pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
                     let path = path.path();
                     match single_refresh(&path) {
                         Ok(_) => {}
-                        Err(e) => warn!(target: "refresh", "Error refreshing {}: {e}", path.to_str().unwrap()),
+                        Err(e) => log::warn!(target: "refresh", "Error refreshing {}: {e}", path.to_str().unwrap()),
                     };
                 }
             }

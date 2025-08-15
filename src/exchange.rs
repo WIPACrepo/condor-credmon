@@ -19,8 +19,10 @@ impl ExtraTokenFields for CustomTokenExtraFields {}
 
 pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType>, Box<dyn std::error::Error>> {
     let config = condor_config();
+    log::info!(target: "exchange", "Getting tokens");
 
     let provider_name = &args.provider;
+    log::info!(target: "exchange", "  provider = {provider_name}");
 
     let issuer_key = format!("{provider_name}_ISSUER");
     let issuer_url = IssuerUrl::new(
@@ -31,6 +33,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
             .ok_or(CredmonError::IssuerError(format!("{issuer_key} is not a string")))?
             .to_string(),
     )?;
+    log::info!(target: "exchange", "  issuer = {issuer_url}");
 
     let client_id_key = format!("{provider_name}_CLIENT_ID");
     let client_id = ClientId::new(
@@ -41,6 +44,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
             .ok_or(CredmonError::OAuthDirError(format!("{client_id_key} is not a string")))?
             .to_string(),
     );
+    log::info!(target: "exchange", "  client_id = {}", client_id.as_str());
 
     let client_secret_key = format!("{provider_name}_CLIENT_SECRET_FILE");
     let client_secret_file = config
@@ -57,7 +61,11 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
         .expect("Client should build");
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
-    let provider_metadata = CoreProviderMetadata::discover(&issuer_url, &http_client)?;
+    let provider_metadata = match CoreProviderMetadata::discover(&issuer_url, &http_client) {
+        Ok(x) => Ok(x),
+        Err(x) => Err(CredmonError::DiscoveryError(x.to_string())),
+    }?;
+
     let token_url = match provider_metadata.token_endpoint() {
         Some(x) => x.to_string(),
         None => return Result::Err(Box::new(CredmonError::DiscoveryError("token url not discovered".into()))),
