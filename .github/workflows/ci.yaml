@@ -75,7 +75,7 @@ jobs:
           if [ ! -f ~/.cargo/bin/cargo-tarpaulin ]; then
             cargo install cargo-tarpaulin
           fi
-      - run: cargo tarpaulin --fail-immediately --fail-under 10 --locked
+      - run: cargo tarpaulin --fail-immediately --fail-under 20 --locked
 
   build_rpm:
     # only run on main/master/default

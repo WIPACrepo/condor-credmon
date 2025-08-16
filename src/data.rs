@@ -202,9 +202,11 @@ mod tests {
     use tempfile::NamedTempFile;
 
     use super::*;
+    use crate::logging::test_logger;
 
     #[test]
     fn test_args_none() {
+        test_logger();
         let fake_args = vec![];
         let ret = Args::from_env_impl(fake_args);
         assert!(ret.err().unwrap().to_string().contains("ArgumentError"));
@@ -212,6 +214,7 @@ mod tests {
 
     #[test]
     fn test_args_no_options() {
+        test_logger();
         let fake_args = vec![String::from("exec"), String::from("scopes=foo")];
         let ret = Args::from_env_impl(fake_args);
         let s = ret.err().unwrap().to_string();
@@ -220,6 +223,7 @@ mod tests {
 
     #[test]
     fn test_args_no_scopes() {
+        test_logger();
         let fake_args = vec![String::from("exec"), String::from("options=provider")];
         let ret = Args::from_env_impl(fake_args).ok().unwrap();
         assert_eq!(ret.provider, "provider");
@@ -229,6 +233,7 @@ mod tests {
 
     #[test]
     fn test_args_scopes() {
+        test_logger();
         let fake_args = vec![String::from("exec"), String::from("scopes=foo,bar&options=provider")];
         let ret = Args::from_env_impl(fake_args).ok().unwrap();
         assert_eq!(ret.provider, "provider");
@@ -238,6 +243,7 @@ mod tests {
 
     #[test]
     fn test_args_handle() {
+        test_logger();
         let fake_args = vec![String::from("exec"), String::from("scopes=foo,bar&options=provider&handle=baz")];
         let ret = Args::from_env_impl(fake_args).ok().unwrap();
         assert_eq!(ret.provider, "provider");
@@ -247,6 +253,7 @@ mod tests {
 
     #[test]
     fn test_client_info() {
+        test_logger();
         let mut config: serde_json::Map<String, Value> = serde_json::Map::new();
         config.insert("test_ISSUER".into(), "http://foo".into());
         config.insert("test_CLIENT_ID".into(), "client".into());

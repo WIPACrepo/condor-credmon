@@ -71,7 +71,7 @@ fn log_to_file(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dy
     // Logging to log file (with rolling)
     let logfile = log4rs::append::rolling_file::RollingFileAppender::builder()
         // Pattern: https://docs.rs/log4rs/*/log4rs/encode/pattern/index.html
-        .encoder(Box::new(PatternEncoder::new("{d} {l} {M} - {m}{n}")))
+        .encoder(Box::new(PatternEncoder::new("{d} {l} {M:<24} - {m}{n}")))
         .build(log_path, Box::new(policy))?;
 
     let config = Config::builder()
@@ -138,4 +138,12 @@ pub fn update_file_logging(handle: &mut Handle) {
         .unwrap();
 
     handle.set_config(config);
+}
+
+static INIT: std::sync::Once = std::sync::Once::new();
+
+pub fn test_logger() {
+    INIT.call_once(|| {
+        stderrlog::new().verbosity(log::Level::Debug).init().unwrap();
+    });
 }

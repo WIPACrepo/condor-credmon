@@ -28,10 +28,10 @@ SEC_CREDENTIAL_STORER = /usr/bin/condor_credmod_rust_client
 #   before they expire when they are fetched by credmon.  It must
 #   be set to be less than the expiration time assigned by the token
 #   issuer.
-CREDMON_OAUTH_TOKEN_MINIMUM=240
+CREDMON_OAUTH_TOKEN_MINIMUM=120
 # This is the time in seconds between fetching new access tokens.
 #   If not set, the default is half of CREDMON_OATH_TOKEN_MINIMUM.
-CREDMON_OAUTH_TOKEN_REFRESH=150
+CREDMON_OAUTH_TOKEN_REFRESH=60
 # This is the time in seconds that credd will wait after jobs are
 #   finished before deleting the user's credential directory.
 SEC_CREDENTIAL_SWEEP_DELAY=86400

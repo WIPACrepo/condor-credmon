@@ -122,13 +122,11 @@ mod tests {
     use std::time::Duration;
     use tempfile::NamedTempFile;
 
-    fn init() {
-        stderrlog::new().verbosity(log::Level::Debug).init().unwrap();
-    }
+    use crate::logging::test_logger;
 
     #[test]
     fn test_need_refresh() {
-        init();
+        test_logger();
         let tmp = NamedTempFile::new().unwrap();
         let path = tmp.path();
         let exp = SystemTime::now()
