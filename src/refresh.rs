@@ -10,8 +10,28 @@ use crate::error::CredmonError;
 
 const TOKEN_MINIMUM_EXPIRATION: u64 = 60;
 
+fn need_refresh(path: &Path, exp_min: u64) -> bool {
+    match AccessFile::from_file(path) {
+        Ok(x) => {
+            // check expiration
+            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+            let expiration = x.expires_at;
+            log::debug!("now: {now}, exp: {expiration}, exp_min: {exp_min}");
+            if expiration - exp_min as f64 > now {
+                log::info!("  Refresh not needed");
+                return false;
+            }
+        }
+        Err(_) => {
+            // file is missing, do refresh
+            log::info!("  Access token missing!");
+        }
+    }
+    true
+}
+
 fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    log::info!(target: "refresh", "Checking {}", path.to_str().unwrap());
+    log::info!("Checking {}", path.to_str().unwrap());
 
     let config = condor_config();
 
@@ -20,26 +40,15 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         None => TOKEN_MINIMUM_EXPIRATION,
     };
 
-    let old_refresh_file = RefreshFile::from_file(path)?;
-    let access_path = path.with_extension("use");
-    match AccessFile::from_file(&access_path) {
-        Ok(x) => {
-            // check expiration
-            let expiration = UNIX_EPOCH + Duration::from_secs_f64(x.expires_at);
-            if expiration < SystemTime::now().checked_add(Duration::from_secs(exp_min)).unwrap() {
-                log::info!(target: "refresh", "  Refresh not needed");
-                return Ok(());
-            }
-        }
-        Err(_) => {
-            // file is missing, do refresh
-            log::info!(target: "refresh", "  Access token missing!");
-        }
+    if !need_refresh(&path.with_extension("use"), exp_min) {
+        return Ok(());
     }
-    log::warn!(target: "refresh", "  Now doing refresh for {}", path.to_str().unwrap());
+    log::warn!("  Now doing refresh for {}", path.to_str().unwrap());
+
+    let old_refresh_file = RefreshFile::from_file(path)?;
 
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
-    log::info!(target: "refresh", "  provider(+handle) = {provider_name}");
+    log::info!("  provider(+handle) = {provider_name}");
     let info = match provider_name.rsplit_once('_') {
         Some((p, _)) => match ClientInfo::new(p, &config) {
             Err(_) => ClientInfo::new(provider_name, &config)?,
@@ -97,7 +106,7 @@ pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
                     let path = path.path();
                     match single_refresh(&path) {
                         Ok(_) => {}
-                        Err(e) => log::warn!(target: "refresh", "Error refreshing {}: {e}", path.to_str().unwrap()),
+                        Err(e) => log::warn!("Error refreshing {}: {e}", path.to_str().unwrap()),
                     };
                 }
             }
@@ -105,4 +114,33 @@ pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+
+    fn init() {
+        stderrlog::new().verbosity(log::Level::Debug).init().unwrap();
+    }
+
+    #[test]
+    fn test_need_refresh() {
+        init();
+        let tmp = NamedTempFile::new().unwrap();
+        let path = tmp.path();
+        let exp = SystemTime::now().checked_add(Duration::from_secs(10)).unwrap().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
+        let access = AccessFile{
+            access_token: "foo".into(),
+            token_type: "bearer".into(),
+            expires_in: 10,
+            expires_at: exp,
+            scope: vec![],
+        };
+        access.write_to_file(path).unwrap();
+
+        assert!(!need_refresh(path, 5));
+        assert!(need_refresh(path, 20));
+    }
 }
