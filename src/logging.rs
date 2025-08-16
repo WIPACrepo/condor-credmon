@@ -16,7 +16,7 @@ const LOG_DEFAULT_LEVEL: log::LevelFilter = log::LevelFilter::Warn;
 const LOG_DEFAULT_SIZE: u64 = 1000000000;
 const LOG_DEFAULT_ROTATIONS: u32 = 5;
 const LOG_DEFAULT_PATH: &str = "/var/log/condor/CredMonOAuthLog";
-const LOG_FORMAT: &str = "{d:(%Y-%m-%dT%H:%M:%S%.3f)} {l} {M:<24} - {m}{n}";
+const LOG_FORMAT: &str = "{d(%Y-%m-%dT%H:%M:%S%.3f)} {l} {M:<24} - {m}{n}";
 
 fn get_size(config: &ConfigType, key: &str) -> u64 {
     match config.get(key) {
@@ -203,5 +203,12 @@ mod tests {
             Ok(ret) => ret,
         };
         assert_eq!(ret.appenders().len(), 1);
+    }
+
+    #[test]
+    fn test_errlog() {
+        let config = ConfigType::new();
+        log_to_stderr(&config).unwrap();
+        log::error!("test");
     }
 }
