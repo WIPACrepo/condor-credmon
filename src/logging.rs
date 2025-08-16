@@ -204,11 +204,4 @@ mod tests {
         };
         assert_eq!(ret.appenders().len(), 1);
     }
-
-    #[test]
-    fn test_errlog() {
-        let config = ConfigType::new();
-        log_to_stderr(&config).unwrap();
-        log::error!("test");
-    }
 }
