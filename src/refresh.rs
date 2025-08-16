@@ -119,6 +119,7 @@ pub fn refresh_all_tokens() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
     use tempfile::NamedTempFile;
 
     fn init() {
