@@ -2,7 +2,7 @@ use oauth2::RefreshToken;
 use openidconnect::core::{CoreClient, CoreProviderMetadata};
 use std::fs;
 use std::path::Path;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::config::{coerce_to_int, config as condor_config};
 use crate::data::{AccessFile, ClientInfo, RefreshFile, write_tokens_to_file};
