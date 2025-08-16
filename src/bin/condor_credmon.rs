@@ -1,5 +1,4 @@
 use log::warn;
-use serde_json::{Map, Value};
 use signal_hook::consts::SIGHUP;
 use signal_hook::iterator::Signals;
 use std::backtrace::Backtrace;
@@ -10,13 +9,13 @@ use std::thread;
 use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 
-use condor_credmon::config::{coerce_to_int, config as condor_config, reload_config};
+use condor_credmon::config::{Config, coerce_to_int, config as condor_config, reload_config};
 use condor_credmon::logging::{configure_logging, update_file_logging};
 use condor_credmon::refresh::refresh_all_tokens;
 
 const TOKEN_REFRESH_INTERVAL: u64 = 60;
 
-fn get_refresh_interval(config: &Map<String, Value>) -> Result<u64, Box<dyn Error>> {
+fn get_refresh_interval(config: &Config) -> Result<u64, Box<dyn Error>> {
     match config.get("CREDMON_OAUTH_TOKEN_REFRESH") {
         Some(x) => coerce_to_int(x),
         None => match config.get("CREDMON_OAUTH_TOKEN_MINIMUM") {
@@ -59,7 +58,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         if RELOAD.load(Relaxed) {
             RELOAD.store(false, Relaxed);
             reload_config();
-            update_file_logging(&mut log_handle);
+            update_file_logging(&mut log_handle)?;
             config = condor_config();
             refresh_interval = get_refresh_interval(&config)?;
             last_refresh = SystemTime::UNIX_EPOCH; // refresh immediately after reload
@@ -86,7 +85,7 @@ mod tests {
     fn test_get_refresh_interval() {
         test_logger();
 
-        let mut config = Map::new();
+        let mut config = Config::new();
 
         let ret = get_refresh_interval(&config).unwrap();
         assert_eq!(ret, TOKEN_REFRESH_INTERVAL);
