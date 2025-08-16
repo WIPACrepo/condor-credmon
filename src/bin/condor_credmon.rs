@@ -59,7 +59,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         if RELOAD.load(Relaxed) {
             RELOAD.store(false, Relaxed);
             reload_config();
-            update_file_logging(&mut log_handle);
+            update_file_logging(&mut log_handle)?;
             config = condor_config();
             refresh_interval = get_refresh_interval(&config)?;
             last_refresh = SystemTime::UNIX_EPOCH; // refresh immediately after reload

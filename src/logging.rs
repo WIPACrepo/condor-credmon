@@ -41,7 +41,7 @@ fn get_size(key: &str) -> u64 {
     }
 }
 
-fn log_to_file(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dyn Error>> {
+fn log_to_file_setup(log_verbosity: log::LevelFilter) -> Result<Config, Box<dyn Error>> {
     let config = condor_config();
 
     let log_size = get_size("MAX_CREDMON_OAUTH_LOG");
@@ -78,6 +78,11 @@ fn log_to_file(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dy
         .appender(Appender::builder().build("logfile", Box::new(logfile)))
         .build(Root::builder().appender("logfile").build(log_verbosity))?;
 
+    Ok(config)
+}
+
+fn log_to_file(log_verbosity: log::LevelFilter) -> Result<log4rs::Handle, Box<dyn Error>> {
+    let config = log_to_file_setup(log_verbosity)?;
     let handle = log4rs::init_config(config)?;
     Ok(handle)
 }
@@ -121,23 +126,14 @@ pub fn configure_logging(how_output: Option<&str>) -> Result<log4rs::Handle, Box
     }
 }
 
-pub fn update_file_logging(handle: &mut Handle) {
+pub fn update_file_logging(handle: &mut Handle) -> Result<(), Box<dyn Error>> {
     let config = condor_config();
 
     let log_verbosity = get_log_level(&config);
 
-    // Build a stderr logger.
-    let stderr = ConsoleAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{d} {l} {M} - {m}{n}")))
-        .target(Target::Stderr)
-        .build();
+    handle.set_config(log_to_file_setup(log_verbosity)?);
 
-    let config = Config::builder()
-        .appender(Appender::builder().build("stderr", Box::new(stderr)))
-        .build(Root::builder().appender("stderr").build(log_verbosity))
-        .unwrap();
-
-    handle.set_config(config);
+    Ok(())
 }
 
 static INIT: std::sync::Once = std::sync::Once::new();
