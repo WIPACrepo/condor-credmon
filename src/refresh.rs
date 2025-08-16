@@ -130,8 +130,13 @@ mod tests {
         init();
         let tmp = NamedTempFile::new().unwrap();
         let path = tmp.path();
-        let exp = SystemTime::now().checked_add(Duration::from_secs(10)).unwrap().duration_since(UNIX_EPOCH).unwrap().as_secs_f64();
-        let access = AccessFile{
+        let exp = SystemTime::now()
+            .checked_add(Duration::from_secs(10))
+            .unwrap()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
+        let access = AccessFile {
             access_token: "foo".into(),
             token_type: "bearer".into(),
             expires_in: 10,
