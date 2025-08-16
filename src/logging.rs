@@ -16,6 +16,7 @@ const LOG_DEFAULT_LEVEL: log::LevelFilter = log::LevelFilter::Warn;
 const LOG_DEFAULT_SIZE: u64 = 1000000000;
 const LOG_DEFAULT_ROTATIONS: u32 = 5;
 const LOG_DEFAULT_PATH: &str = "/var/log/condor/CredMonOAuthLog";
+const LOG_FORMAT: &str = "{d:(%Y-%m-%dT%H:%M:%S%.3f)} {l} {M:<24} - {m}{n}";
 
 fn get_size(config: &ConfigType, key: &str) -> u64 {
     match config.get(key) {
@@ -81,7 +82,7 @@ fn log_to_file_setup(condor_config: &ConfigType) -> Result<Config, Box<dyn Error
     // Logging to log file (with rolling)
     let logfile = log4rs::append::rolling_file::RollingFileAppender::builder()
         // Pattern: https://docs.rs/log4rs/*/log4rs/encode/pattern/index.html
-        .encoder(Box::new(PatternEncoder::new("{d} {l} {M:<24} - {m}{n}")))
+        .encoder(Box::new(PatternEncoder::new(LOG_FORMAT)))
         .build(log_path, Box::new(policy))?;
 
     let config = Config::builder()
@@ -102,7 +103,7 @@ fn log_to_stderr(condor_config: &ConfigType) -> Result<log4rs::Handle, Box<dyn E
 
     // Build a stderr logger.
     let stderr = ConsoleAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{d} {l} {M:<24} - {m}{n}")))
+        .encoder(Box::new(PatternEncoder::new(LOG_FORMAT)))
         .target(Target::Stderr)
         .build();
 
