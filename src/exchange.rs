@@ -15,7 +15,10 @@ pub struct CustomTokenExtraFields {
 }
 impl ExtraTokenFields for CustomTokenExtraFields {}
 
-pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType>, Box<dyn std::error::Error>> {
+pub fn do_token_exchange(
+    args: &Args,
+    username: &str,
+) -> Result<oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType>, Box<dyn std::error::Error>> {
     let config = condor_config();
     log::info!("Getting tokens");
     log::info!("  provider = {}", args.provider);
@@ -61,7 +64,7 @@ pub fn do_token_exchange(args: &Args) -> Result<oauth2::StandardTokenResponse<Cu
         ("subject_token", subject_token),
         ("subject_token_type", "urn:ietf:params:oauth:token-type:access_token"),
         ("requested_token_type", "urn:ietf:params:oauth:token-type:refresh_token"),
-        ("requested_subject", "dschultz"),
+        ("requested_subject", username),
         ("scope", &args.scopes),
     ];
 

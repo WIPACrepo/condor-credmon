@@ -34,9 +34,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         .as_str()
         .ok_or(CredmonError::OAuthDirError("SEC_CREDENTIAL_DIRECTORY_OAUTH is not a string".into()))?;
 
-    let path = PathBuf::from(cred_dir).join(username).join(refresh_filename);
+    let path = PathBuf::from(cred_dir).join(username.as_str()).join(refresh_filename);
 
-    let result = do_token_exchange(&args)?;
+    let result = do_token_exchange(&args, username.as_str())?;
     write_tokens_to_file(&path, result)?;
     Ok(())
 }
