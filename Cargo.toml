@@ -7,6 +7,7 @@ edition = "2024"
 publish = false
 
 [package.metadata.generate-rpm]
+name = "condor-credmon-rust"
 assets = [
     { source = "target/release/condor_credmon", dest = "/usr/sbin/condor_credmon_rust" },
     { source = "target/release/client", dest = "/usr/bin/condor_credmod_rust_client", mode = "4755" }
