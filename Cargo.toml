@@ -7,6 +7,7 @@ edition = "2024"
 publish = false
 
 [package.metadata.generate-rpm]
+name = "condor-credmon-rust"
 assets = [
     { source = "target/release/condor_credmon", dest = "/usr/sbin/condor_credmon_rust" },
     { source = "target/release/client", dest = "/usr/bin/condor_credmod_rust_client", mode = "4755" }
@@ -30,4 +31,4 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.142"
 signal-hook = "0.3.18"
 stderrlog = "0.6.0"
-tempfile = "3.20.0"
+tempfile = "3.21.0"
