@@ -4,7 +4,7 @@ use std::process::Command;
 
 use crate::error::CredmonError;
 
-static HTCONDOR_CONFIG: [&str; 2] = ["-c", "import htcondor,json; print(json.dumps({k:v for k,v in htcondor.param.items()}))"];
+static HTCONDOR_CONFIG: [&str; 2] = ["-c", "import htcondor2,json; print(json.dumps({k:v for k,v in htcondor2.param.items()}))"];
 
 pub type Config = Map<String, Value>;
 
@@ -23,7 +23,7 @@ pub fn config() -> Config {
     log::info!(target:"config", "Loading HTCondor config");
 
     // Execute the Python script
-    let output = Command::new("python3").args(HTCONDOR_CONFIG).output().expect("Cannot get HTCondor config!");
+    let output = Command::new("/usr/bin/python3").args(HTCONDOR_CONFIG).output().expect("Cannot get HTCondor config!");
 
     // Check if the command was successful
     if !output.status.success() {

@@ -28,7 +28,9 @@ SEC_CREDENTIAL_STORER = /usr/bin/condor_credmod_rust_client
 #   before they expire when they are fetched by credmon.  It must
 #   be set to be less than the expiration time assigned by the token
 #   issuer.
-CREDMON_OAUTH_TOKEN_MINIMUM=120
+# NOTE: this must be larger than SEC_CREDENTIAL_REFRESH on the EP,
+#   which is by default 300
+CREDMON_OAUTH_TOKEN_MINIMUM=360
 # This is the time in seconds between fetching new access tokens.
 #   If not set, the default is half of CREDMON_OATH_TOKEN_MINIMUM.
 CREDMON_OAUTH_TOKEN_REFRESH=60
@@ -36,15 +38,24 @@ CREDMON_OAUTH_TOKEN_REFRESH=60
 #   finished before deleting the user's credential directory.
 SEC_CREDENTIAL_SWEEP_DELAY=86400
 
+##############################################
+# NOTE: min access token expiration
+# The EP sets SEC_CREDENTIAL_REFRESH, which by
+# default is 300 seconds. If your access token
+# expiration is <= 300 seconds, you will get
+# occasional failures during the window the
+# token is updating.
+##############################################
+
 # Now set up a provider.
 # In order for condor to not print out a url, we claim we are a Vault credmon
 VAULT_CREDMON_PROVIDER_NAMES = myprovider
 # The base path to the issuer, for dynamic discovery.
-myprovider_ISSUER = "https://my.issuer.here"
+myprovider_ISSUER = https://my.issuer.here
 # The client id registered with the issuer.
-myprovider_CLIENT_ID = "XXXXXX"
+myprovider_CLIENT_ID = XXXXXX
 # The client secret is provided in a file that can only be read by root.
 myprovider_CLIENT_SECRET_FILE = /etc/condor/.secrets/XXXXXX-client-secret
 # Actually tell the STORER which provider this is
-myprovider_DEFAULT_OPTIONS = "myprovider"
+myprovider_DEFAULT_OPTIONS = myprovider
 ```
