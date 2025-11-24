@@ -52,17 +52,10 @@ pub fn do_token_exchange(
     // URL needs to not be empty, so put a dummy URL here
     .set_redirect_uri(RedirectUrl::new("http://localhost".to_string())?);
 
-    // 3. Exchange client credentials for an access token
-    let token_response = client.exchange_client_credentials()?.request(&http_client)?;
-
-    let subject_token = token_response.access_token().secret();
-
-    // 4. do token exchange
+    // Do token exchange
     let params = [
         ("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange"),
         ("audience", info.client_id.as_str()),
-        ("subject_token", subject_token),
-        ("subject_token_type", "urn:ietf:params:oauth:token-type:access_token"),
         ("requested_token_type", "urn:ietf:params:oauth:token-type:refresh_token"),
         ("requested_subject", username),
         ("scope", &args.scopes),
