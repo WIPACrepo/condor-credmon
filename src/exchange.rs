@@ -1,8 +1,8 @@
 use oauth2::ExtraTokenFields;
 use oauth2::basic::BasicTokenType;
+use openidconnect::OAuth2TokenResponse;
 use openidconnect::core::CoreProviderMetadata;
 use openidconnect::reqwest;
-use openidconnect::OAuth2TokenResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::config::config as condor_config;
