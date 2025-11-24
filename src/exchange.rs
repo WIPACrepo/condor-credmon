@@ -1,8 +1,8 @@
 use oauth2::ExtraTokenFields;
 use oauth2::basic::BasicTokenType;
-use openidconnect::core::{CoreClient, CoreProviderMetadata};
+use openidconnect::core::CoreProviderMetadata;
 use openidconnect::reqwest;
-use openidconnect::{OAuth2TokenResponse, RedirectUrl};
+use openidconnect::OAuth2TokenResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::config::config as condor_config;
@@ -41,16 +41,6 @@ pub fn do_token_exchange(
         Some(x) => x.to_string(),
         None => return Result::Err(Box::new(CredmonError::DiscoveryError("token url not discovered".into()))),
     };
-
-    // Create an OpenID Connect client by specifying the client ID, client secret, authorization URL
-    // and token URL.
-    let client = CoreClient::from_provider_metadata(
-        provider_metadata,
-        info.client_id.clone(),
-        Some(info.client_secret.clone()),
-    )
-    // URL needs to not be empty, so put a dummy URL here
-    .set_redirect_uri(RedirectUrl::new("http://localhost".to_string())?);
 
     // Do token exchange
     let params = [
