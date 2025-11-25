@@ -2,6 +2,7 @@ use nix::unistd::{Uid, User};
 use std::backtrace::Backtrace;
 use std::error::Error;
 use std::path::PathBuf;
+use std::process::ExitCode;
 
 use condor_credmon::config::config as condor_config;
 use condor_credmon::data::{Args, RefreshFile, compare_scopes, write_tokens_to_file};
@@ -61,12 +62,13 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn main() {
+fn main() -> ExitCode {
     match run() {
-        Ok(_) => (),
+        Ok(_) => ExitCode::SUCCESS,
         Err(e) => {
             log::info!("Backtrace: {}", Backtrace::force_capture());
             log::error!("Error creating token: {e}");
+            ExitCode::FAILURE
         }
     }
 }

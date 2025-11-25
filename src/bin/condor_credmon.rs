@@ -3,6 +3,7 @@ use signal_hook::consts::SIGHUP;
 use signal_hook::iterator::Signals;
 use std::backtrace::Backtrace;
 use std::error::Error;
+use std::process::ExitCode;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
@@ -66,12 +67,13 @@ fn run() -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     match run() {
-        Ok(_) => (),
+        Ok(_) => ExitCode::SUCCESS,
         Err(e) => {
             log::error!("Backtrace: {}", Backtrace::force_capture());
             log::error!("Fatal error in credmon: {e}");
+            ExitCode::FAILURE
         }
     }
 }
