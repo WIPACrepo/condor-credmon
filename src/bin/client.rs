@@ -55,7 +55,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         let result = do_token_exchange(&args, username.as_str())?;
         write_tokens_to_file(&path, result)?;
     } else {
-        log::info!("Token already exists, not contacting server");
+        log::warn!("Token already exists, not contacting server");
     }
 
     Ok(())
@@ -65,7 +65,7 @@ fn main() {
     match run() {
         Ok(_) => (),
         Err(e) => {
-            log::error!("Backtrace: {}", Backtrace::force_capture());
+            log::info!("Backtrace: {}", Backtrace::force_capture());
             log::error!("Error creating token: {e}");
         }
     }
