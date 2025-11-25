@@ -57,16 +57,21 @@ pub fn do_token_exchange(
         .form(&params)
         .send()?;
 
-    if result.status().as_u16() >= 400 {
-        println!("{}", result.text()?);
-        panic!("bad status");
-    };
-    let body: oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType> = result.json()?;
+    // Verify response
+    match result.status().as_u16() {
+        n if n >= 400 => {
+            let err_str = format!("Error requesting token: {}", result.text()?);
+            Err(Box::new(CredmonError::RequestError(err_str)))
+        },
+        _ => {
+            let body: oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType> = result.json()?;
 
-    match body.refresh_token() {
-        Some(_) => Ok(body),
-        None => Err(Box::new(CredmonError::MissingRefreshToken(
-            "token exchange did not return a refresh token".into(),
-        ))),
+            match body.refresh_token() {
+                Some(_) => Ok(body),
+                None => Err(Box::new(CredmonError::MissingRefreshToken(
+                    "token exchange did not return a refresh token".into(),
+                ))),
+            }
+        }
     }
 }
