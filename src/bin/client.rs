@@ -4,10 +4,11 @@ use std::error::Error;
 use std::path::PathBuf;
 
 use condor_credmon::config::config as condor_config;
-use condor_credmon::data::{Args, write_tokens_to_file};
+use condor_credmon::data::{Args, RefreshFile, compare_scopes, write_tokens_to_file};
 use condor_credmon::error::CredmonError;
 use condor_credmon::exchange::do_token_exchange;
 use condor_credmon::logging::configure_logging;
+use condor_credmon::refresh::should_refresh;
 
 fn run() -> Result<(), Box<dyn Error>> {
     let _log_handle = configure_logging(Some("stderr"))?;
@@ -36,8 +37,27 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let path = PathBuf::from(cred_dir).join(username.as_str()).join(refresh_filename);
 
-    let result = do_token_exchange(&args, username.as_str())?;
-    write_tokens_to_file(&path, result)?;
+    // check if the token already exists and matches the request
+    let create_token = match RefreshFile::from_file(&path) {
+        Ok(rf) => {
+            if !compare_scopes(args.scopes.as_str(), rf.scopes.as_str()) {
+                log::info!("Scopes of existing token do not match. Making new token!");
+                true
+            } else {
+                // check access token and expiration
+                should_refresh(&path).unwrap_or(true)
+            }
+        }
+        Err(_) => true,
+    };
+
+    if create_token {
+        let result = do_token_exchange(&args, username.as_str())?;
+        write_tokens_to_file(&path, result)?;
+    } else {
+        log::info!("Token already exists, not contacting server");
+    }
+
     Ok(())
 }
 

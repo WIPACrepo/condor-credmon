@@ -10,7 +10,7 @@ use crate::error::CredmonError;
 
 const TOKEN_MINIMUM_EXPIRATION: u64 = 60;
 
-fn need_refresh(path: &Path, exp_min: u64) -> bool {
+fn is_access_expired(path: &Path, exp_min: u64) -> bool {
     match AccessFile::from_file(path) {
         Ok(x) => {
             // check expiration
@@ -30,9 +30,7 @@ fn need_refresh(path: &Path, exp_min: u64) -> bool {
     true
 }
 
-fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    log::info!("Checking {}", path.to_str().unwrap());
-
+pub fn should_refresh(refresh_path: &Path) -> Result<bool, Box<dyn std::error::Error>> {
     let config = condor_config();
 
     let exp_min = match config.get("CREDMON_OAUTH_TOKEN_MINIMUM") {
@@ -40,7 +38,14 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         None => TOKEN_MINIMUM_EXPIRATION,
     };
 
-    if !need_refresh(&path.with_extension("use"), exp_min) {
+    Ok(is_access_expired(&refresh_path.with_extension("use"), exp_min))
+}
+
+fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    log::info!("Checking {}", path.to_str().unwrap());
+    let config = condor_config();
+
+    if !should_refresh(path)? {
         return Ok(());
     }
     log::warn!("  Now doing refresh for {}", path.to_str().unwrap());
@@ -72,7 +77,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let client = CoreClient::from_provider_metadata(provider_metadata, info.client_id, Some(info.client_secret))
         .set_redirect_uri(openidconnect::RedirectUrl::new("http://localhost".to_string())?); // Redirect URI is required for client creation, but not strictly used in Client Credentials Flow
 
-    // 3. Exchange client credentials for an access token
+    // 2. Do token refresh
     let token_response = client
         .exchange_refresh_token(&RefreshToken::new(old_refresh_file.refresh_token))?
         .request(&http_client)?;
@@ -125,7 +130,7 @@ mod tests {
     use crate::logging::test_logger;
 
     #[test]
-    fn test_need_refresh() {
+    fn test_is_access_expired() {
         test_logger();
         let tmp = NamedTempFile::new().unwrap();
         let path = tmp.path();
@@ -144,7 +149,7 @@ mod tests {
         };
         access.write_to_file(path).unwrap();
 
-        assert!(!need_refresh(path, 5));
-        assert!(need_refresh(path, 20));
+        assert!(!is_access_expired(path, 5));
+        assert!(is_access_expired(path, 20));
     }
 }
