@@ -47,8 +47,8 @@ fn run() -> Result<(), Box<dyn Error>> {
                 // check access token and expiration
                 should_refresh(&path).unwrap_or(true)
             }
-        },
-        Err(_) => true
+        }
+        Err(_) => true,
     };
 
     if create_token {

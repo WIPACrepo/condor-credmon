@@ -46,7 +46,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let config = condor_config();
 
     if !should_refresh(path)? {
-        return Ok(())
+        return Ok(());
     }
     log::warn!("  Now doing refresh for {}", path.to_str().unwrap());
 
