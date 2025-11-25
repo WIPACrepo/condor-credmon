@@ -3,7 +3,7 @@ use oauth2::{ClientId, ClientSecret, ExtraTokenFields, TokenResponse};
 use openidconnect::IssuerUrl;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -107,6 +107,14 @@ pub fn write_tokens_to_file<EF: ExtraTokenFields>(
     Ok(())
 }
 
+/// Compare two scope strings
+/// Space-separated, order does not matter.
+pub fn compare_scopes(s1: &str, s2: &str) -> bool {
+    let words1: HashSet<&str> = s1.split_whitespace().collect();
+    let words2: HashSet<&str> = s2.split_whitespace().collect();
+    words1 == words2
+}
+
 /// Client storer arguments
 pub struct Args {
     pub provider: String,
@@ -203,6 +211,23 @@ mod tests {
 
     use super::*;
     use crate::logging::test_logger;
+
+    #[test]
+    fn test_compare_scopes() {
+        test_logger();
+        let scopes1 = "foo bar baz";
+        let scopes2 = "bar foo baz";
+        assert!(compare_scopes(scopes1, scopes2));
+
+        let scopes3 = "baz   bar  baz  foo";
+        assert!(compare_scopes(scopes1, scopes3));
+
+        let scopes4 = "";
+        assert!(!compare_scopes(scopes1, scopes4));
+
+        let scopes5 = "foo bar";
+        assert!(!compare_scopes(scopes1, scopes5));
+    }
 
     #[test]
     fn test_args_none() {
