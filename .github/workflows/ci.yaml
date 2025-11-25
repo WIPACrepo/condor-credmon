@@ -84,6 +84,8 @@ jobs:
       test
     ]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       next-version: ${{ steps.next-version.outputs.version }}
     steps:
