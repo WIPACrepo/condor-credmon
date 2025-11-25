@@ -62,7 +62,7 @@ pub fn do_token_exchange(
         n if n >= 400 => {
             let err_str = format!("Error requesting token: {}", result.text()?);
             Err(Box::new(CredmonError::RequestError(err_str)))
-        },
+        }
         _ => {
             let body: oauth2::StandardTokenResponse<CustomTokenExtraFields, BasicTokenType> = result.json()?;
 
