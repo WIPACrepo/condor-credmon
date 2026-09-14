@@ -54,7 +54,7 @@ fn single_refresh(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
 
     let provider_name = path.file_stem().unwrap().to_str().unwrap();
     log::info!("  provider(+handle) = {provider_name}");
-    let info = match provider_name.rsplit_once('_') {
+    let info = match provider_name.split_once('_') {
         Some((p, _)) => match ClientInfo::new(p, &config) {
             Err(_) => ClientInfo::new(provider_name, &config)?,
             Ok(x) => x,
